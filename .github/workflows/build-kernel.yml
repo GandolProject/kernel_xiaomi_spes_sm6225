@@ -1,0 +1,51 @@
+name: Build Kernel spes + Flashable ZIP
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout kernel source
+      uses: actions/checkout@v3
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y bc bison build-essential flex libssl-dev libncurses5-dev libelf-dev curl git zip
+
+    - name: Clone Clang
+      run: |
+        git clone --depth=1 https://github.com/ZyCromerZ/Clang.git -b 18 clang
+
+    - name: Build kernel
+      run: |
+        export ARCH=arm64
+        export SUBARCH=arm64
+        export KBUILD_BUILD_USER=Gandol
+        export KBUILD_BUILD_HOST=GitHubActions
+        export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
+
+        make O=out ARCH=arm64 spes_defconfig
+        make -j$(nproc) O=out ARCH=arm64 \
+          CC=clang \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CROSS_COMPILE_COMPAT=arm-linux-gnueabi-
+
+    - name: Clone AnyKernel3
+      run: |
+        git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
+
+    - name: Copy Image.gz-dtb to AnyKernel3
+      run: |
+        cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+        cd AnyKernel3
+        zip -r9 ../spes-kernel-flashable.zip *
+
+    - name: Upload Flashable ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: spes-kernel-flashable
+        path: spes-kernel-flashable.zip
