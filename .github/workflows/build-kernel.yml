@@ -45,7 +45,7 @@ jobs:
         zip -r9 ../spes-kernel-flashable.zip *
 
     - name: Upload Flashable ZIP
-      uses: actions/upload-artifact@v3
-      with:
-        name: spes-kernel-flashable
-        path: spes-kernel-flashable.zip
+  uses: actions/upload-artifact@v4
+  with:
+    name: spes-kernel-flashable
+    path: spes-kernel-flashable.zip
