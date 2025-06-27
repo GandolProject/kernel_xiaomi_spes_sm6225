@@ -9,24 +9,28 @@ jobs:
 
     steps:
     - name: Checkout kernel source
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
         sudo apt update
-        sudo apt install -y bc bison build-essential flex libssl-dev libncurses5-dev libelf-dev curl git zip
+        sudo apt install -y bc bison build-essential flex libssl-dev libncurses5-dev libelf-dev curl git wget zip
 
-    - name: Clone Clang
+    - name: Clone Google Clang 17
       run: |
-        git clone --depth=1 https://github.com/ZyCromerZ/Clang.git -b 18 clang
+        mkdir clang
+        cd clang
+        wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/master/clang-r487747c.tar.gz
+        tar -xf clang-r487747c.tar.gz
+        cd ..
 
-    - name: Build kernel
+    - name: Build Kernel
       run: |
         export ARCH=arm64
         export SUBARCH=arm64
-        export KBUILD_BUILD_USER=Gandol
-        export KBUILD_BUILD_HOST=GitHubActions
-        export PATH=$GITHUB_WORKSPACE/clang/bin:$PATH
+        export KBUILD_BUILD_USER="Gandol"
+        export KBUILD_BUILD_HOST="GitHubActions"
+        export PATH=$GITHUB_WORKSPACE/clang/clang-r487747c/bin:$PATH
 
         make O=out ARCH=arm64 spes_defconfig
         make -j$(nproc) O=out ARCH=arm64 \
@@ -38,7 +42,7 @@ jobs:
       run: |
         git clone --depth=1 https://github.com/osm0sis/AnyKernel3.git
 
-    - name: Copy kernel to AnyKernel3
+    - name: Copy Kernel to AnyKernel3
       run: |
         cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
         cd AnyKernel3
